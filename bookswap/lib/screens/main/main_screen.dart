@@ -1,51 +1,59 @@
+import 'package:bookswap/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import '../../core/theme/app_theme.dart';
-import '../books/browse_books_screen.dart';
-import '../books/my_listings_screen.dart';
 import '../chats/chats_list_screen.dart';
+import '../home/browse_listing_screen.dart';
+import '../listings/my_listings_screen.dart';
 import '../settings/settings_screen.dart';
 
-final currentTabProvider = StateProvider<int>((ref) => 0);
-
-class MainScreen extends ConsumerWidget {
+/// Main screen with bottom navigation
+/// Contains 4 tabs: Home, My Listings, Chats, Settings
+class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentTab = ref.watch(currentTabProvider);
+  ConsumerState<MainScreen> createState() => _MainScreenState();
+}
 
-    final screens = [
-      const BrowseBooksScreen(),
-      const MyListingsScreen(),
-      const ChatsListScreen(),
-      const SettingsScreen(),
-    ];
+class _MainScreenState extends ConsumerState<MainScreen> {
+  int _currentIndex = 0;
 
+  // List of screens for each tab
+  final List<Widget> _screens = const [
+    BrowseListingsScreen(),
+    MyListingsScreen(),
+    ChatsListScreen(),
+    SettingsScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      body: screens[currentTab],
+      body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentTab,
-        onTap: (index) => ref.read(currentTabProvider.notifier).state = index,
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        backgroundColor: AppTheme.primaryNavy,
+        selectedItemColor: AppTheme.accentYellow,
+        unselectedItemColor: AppTheme.textGray,
+        type: BottomNavigationBarType.fixed,
+        elevation: 10,
         items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.library_books_outlined),
-            activeIcon: Icon(Icons.library_books),
+            icon: Icon(Icons.library_books),
             label: 'My Listings',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble_outline),
-            activeIcon: Icon(Icons.chat_bubble),
             label: 'Chats',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            activeIcon: Icon(Icons.settings),
+            icon: Icon(Icons.settings),
             label: 'Settings',
           ),
         ],
