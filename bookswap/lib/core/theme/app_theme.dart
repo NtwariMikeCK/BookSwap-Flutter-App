@@ -1,87 +1,105 @@
 import 'package:flutter/material.dart';
 
-class AppColors {
-  static const primary = Color(0xFF1E293B);
-  static const secondary = Color(0xFFFBBF24);
-  static const background = Color(0xFFF8FAFC);
-  static const cardBackground = Colors.white;
-  static const textPrimary = Color(0xFF1E293B);
-  static const textSecondary = Color(0xFF64748B);
-  static const border = Color(0xFFE2E8F0);
-
-  static const statusNew = Color(0xFF10B981);
-  static const statusUsed = Color(0xFFF59E0B);
-}
-
+/// App theme configuration matching your new UI preferences
 class AppTheme {
-  static ThemeData get theme {
+  static const Color primaryNavy = Color.fromARGB(255, 6, 19, 40);
+  // Color palette
+  static const Color accentYellow = Color.fromARGB(
+    255,
+    224,
+    180,
+    69,
+  ); // Accent for icons & highlights
+  static const Color textWhite = Color(0xFFFFFFFF); // White text
+  static const Color cardWhite = Color(
+    0xFFFFFFFF,
+  ); // White for body/card surfaces
+  static const Color textGray = Color.fromARGB(
+    255,
+    171,
+    176,
+    183,
+  ); // Optional gray text
+  // ignore: constant_identifier_names
+  static const Color text_sub_heading1 = Color.fromARGB(216, 255, 255, 255);
+
+  static ThemeData get lightTheme {
     return ThemeData(
-      useMaterial3: true,
-
-      colorScheme: ColorScheme.light(
-        primary: AppColors.primary,
-        secondary: AppColors.secondary,
-        surface: AppColors.background,
-      ),
-
-      scaffoldBackgroundColor: AppColors.background,
-
+      brightness: Brightness.light,
+      primaryColor: primaryNavy,
+      scaffoldBackgroundColor: primaryNavy, // Dark blue background
       appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: primaryNavy,
         elevation: 0,
-        centerTitle: false,
+        centerTitle: true,
+        titleTextStyle: TextStyle(
+          color: textWhite,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+        iconTheme: IconThemeData(color: accentYellow), // Back arrow color
       ),
 
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.secondary,
-          foregroundColor: AppColors.primary,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-      ),
-
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
-        ),
-      ),
-
-      cardTheme: CardThemeData(
-        color: AppColors.cardBackground,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: AppColors.border),
-        ),
-      ),
-
+      // Bottom navigation bar theme
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.primary,
-        selectedItemColor: AppColors.secondary,
+        backgroundColor: primaryNavy,
+        selectedItemColor: accentYellow,
         unselectedItemColor: Colors.white60,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
+      ),
+
+      // Card / body background style
+      cardTheme: CardThemeData(
+        color: cardWhite, // White cards (body background)
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+
+      // Elevated button theme
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: accentYellow,
+          foregroundColor: primaryNavy,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ),
+
+      // Text theme
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(
+          color: textWhite,
+          fontSize: 45,
+          fontWeight: FontWeight.bold,
+        ),
+        bodyLarge: TextStyle(color: textWhite, fontWeight: FontWeight.bold),
+        bodyMedium: TextStyle(color: textWhite, fontWeight: FontWeight.bold),
+        bodySmall: TextStyle(color: textWhite, fontWeight: FontWeight.bold),
+      ),
+
+      // Input decorations
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: cardWhite, // Input field background is white
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(11),
+          borderSide: BorderSide.none,
+        ),
+        hintStyle: const TextStyle(color: textGray),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+      ),
+
+      // Color scheme
+      colorScheme: const ColorScheme.light(
+        primary: accentYellow,
+        secondary: accentYellow,
+        surface: cardWhite,
       ),
     );
   }
