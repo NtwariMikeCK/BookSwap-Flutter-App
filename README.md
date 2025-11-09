@@ -76,6 +76,19 @@ BookSwap creates a trusted, user-friendly ecosystem where students can:
 ---
 
 ## 📱 Screenshots
+<img width="1080" height="2400" alt="Screenshot_1762689580" src="https://github.com/user-attachments/assets/3491ac9b-058f-4c6a-b65b-0cf0dbb72e2a" />
+<img width="1080" height="2400" alt="Screenshot_1762593368" src="https://github.com/user-attachments/assets/8f4d99f8-b373-4108-a7f8-8d765098a96d" />
+<img width="1080" height="2400" alt="Screenshot_1762689588" src="https://github.com/user-attachments/assets/fd085fe3-67c0-4310-990a-1da77ae947a5" />
+<img width="1080" height="2400" alt="Screenshot_1762689630" src="https://github.com/user-attachments/assets/58eb57ad-22fb-4644-a21b-dd17ba1bd0ab" />
+<img width="1080" height="2400" alt="Screenshot_1762689634" src="https://github.com/user-attachments/assets/2ca2eef2-5a70-4bc7-87b8-b055325ceae1" />
+<img width="442" height="767" alt="BookSwap ERD diagram" src="https://github.com/user-attachments/assets/87b46dec-b7a2-4fd1-8376-49e4abb69908" />
+<img width="1080" height="2400" alt="Screenshot_1762689675" src="https://github.com/user-attachments/assets/97ee6764-082c-465f-8747-cc3088c90f54" />
+<img width="1080" height="2400" alt="Screenshot_1762689661" src="https://github.com/user-attachments/assets/bbf25ea1-3811-447e-8048-3e709ed67504" />
+<img width="1080" height="2400" alt="Screenshot_1762689651" src="https://github.com/user-attachments/assets/e188b072-0c26-4b65-a2da-44a8ce41bfa8" />
+<img width="1080" height="2400" alt="Screenshot_1762689646" src="https://github.com/user-attachments/assets/7d9863b1-58ca-4b40-b96e-53828f955619" />
+
+
+
 
 ### Authentication Flow
 ```
@@ -124,7 +137,7 @@ BookSwap creates a trusted, user-friendly ecosystem where students can:
 │   ├── uid (PK)
 │   ├── name
 │   ├── email
-│   └── notificationPreferences
+│   └── isEmailVerified
 │
 ├── 📚 books
 │   ├── bookId (PK)
@@ -149,11 +162,6 @@ BookSwap creates a trusted, user-friendly ecosystem where students can:
 │       ├── messageId (PK)
 │       ├── senderId (FK → users)
 │       └── text
-│
-└── 🔔 notifications
-    ├── notificationId (PK)
-    ├── userId (FK → users)
-    └── type
 ```
 
 ### State Flow Diagram
