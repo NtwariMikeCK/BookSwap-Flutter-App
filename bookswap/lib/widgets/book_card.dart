@@ -1,142 +1,161 @@
-import 'package:flutter/material.dart';
-// import 'package:intl/intl.dart';
-import '../models/book.dart';
-import '../core/theme/app_theme.dart';
+// Remember to remove unused code
 
-class BookCard extends StatelessWidget {
+// ignore_for_file: deprecated_member_use
+
+import 'package:bookswap/core/theme/app_theme.dart';
+import 'package:bookswap/models/book.dart';
+import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:timeago/timeago.dart' as timeago;
+
+/// Book card widget for list view - matching the BookSwap UI design
+class BookCardList extends StatelessWidget {
   final Book book;
   final VoidCallback onTap;
+  final bool showOwner;
 
-  const BookCard({super.key, required this.book, required this.onTap});
+  const BookCardList({
+    super.key,
+    required this.book,
+    required this.onTap,
+    this.showOwner = true,
+  });
 
-  Color _getConditionColor() {
-    switch (book.condition) {
-      case BookCondition.newCondition:
-      case BookCondition.likenew:
-        return AppColors.statusNew;
-      case BookCondition.good:
-      case BookCondition.used:
-        return AppColors.statusUsed;
-    }
-  }
+  // Color _getConditionColor() {
+  //   switch (book.condition.toLowerCase()) {
+  //     case 'new':
+  //       return const Color(0xFF10B981); // green
+  //     case 'like new':
+  //       return const Color(0xFF3B82F6); // blue
+  //     case 'good':
+  //       return const Color(0xFFF59E0B); // amber
+  //     case 'used':
+  //       return const Color(0xFFEF4444); // red
+  //     default:
+  //       return Colors.grey;
+  //   }
+  // }
+
+  String _getTimeAgo() => timeago.format(book.createdAt, locale: 'en_short');
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 80,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Book cover
+            ClipRRect(
+              borderRadius: BorderRadius.circular(1),
+              child: CachedNetworkImage(
+                imageUrl: book.coverUrl ?? '',
+                width: 110,
+                height: 125,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  width: 110,
+                  height: 125,
+                  color: AppTheme.primaryNavy,
+                  child: const Icon(Icons.menu_book, color: Colors.white70),
                 ),
-                child: book.coverUrl != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          book.coverUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(Icons.menu_book, size: 40),
-                        ),
-                      )
-                    : const Center(child: Icon(Icons.menu_book, size: 40)),
+                errorWidget: (context, url, error) => Container(
+                  width: 110,
+                  height: 125,
+                  color: AppTheme.primaryNavy,
+                  child: const Icon(Icons.menu_book, color: Colors.white70),
+                ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      book.title,
-                      style: const TextStyle(
+            ),
+            const SizedBox(width: 12),
+            // Book details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Text(
+                    book.title,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  // Author
+                  Text(
+                    book.author,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: Color.fromARGB(255, 92, 94, 97),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  // Condition badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      // horizontal: 8,
+                      vertical: 3,
+                    ),
+                    // decoration: BoxDecoration(
+                    //   color: _getConditionColor().withOpacity(0.15),
+                    //   borderRadius: BorderRadius.circular(6),
+                    // ),
+                    child: Text(
+                      book.condition,
+                      style: TextStyle(
+                        color: AppTheme.primaryNavy,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      book.author,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _getConditionColor().withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            book.condition.displayName,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: _getConditionColor(),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                  ),
+                  const SizedBox(height: 6),
+
+                  // Time ago
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.access_time,
+                        size: 15,
+                        color: Color.fromARGB(255, 38, 39, 41),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${_getTimeAgo()} Ago',
+                        style: const TextStyle(
+                          color: Color.fromARGB(255, 38, 39, 41),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.schedule,
-                          size: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _getTimeAgo(book.createdAt),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
-  }
-
-  String _getTimeAgo(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
-    } else {
-      return 'Just now';
-    }
   }
 }
