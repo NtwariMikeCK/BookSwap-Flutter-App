@@ -3,8 +3,8 @@ import 'package:bookswap/models/chat.dart';
 import 'package:bookswap/models/message.dart';
 import 'package:bookswap/models/person.dart';
 import 'package:bookswap/models/swap.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // For state management
+import 'package:firebase_auth/firebase_auth.dart'; // For Email Password Validator
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
 import '../services/book_service.dart';

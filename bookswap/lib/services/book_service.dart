@@ -52,13 +52,6 @@ class BookService {
         coverUrl = await _uploadCoverToCloudinary(coverImage);
       }
 
-      // if (coverImage != null) {
-      //   final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-      //   final ref = _storage.ref().child('book_covers/${user.uid}/$fileName');
-      //   await ref.putFile(coverImage);
-      //   coverUrl = await ref.getDownloadURL();
-      // }
-
       // Create book document
       final bookRef = await _firestore.collection('books').add({
         'title': title,
