@@ -1,252 +1,404 @@
+// ignore_for_file: deprecated_member_use
+
+import 'package:bookswap/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/auth_provider.dart';
-import '../../core/theme/app_theme.dart';
-import '../auth/signin_screen.dart';
-import 'my_swaps_screen.dart';
+import '../../providers/providers.dart';
+import '../auth/login_screen.dart';
 
+/// Settings screen
+/// Shows user profile and app settings
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
+  /// Handle logout
+  Future<void> _handleLogout(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).cardTheme.color,
+        title: const Text(
+          'Log Out',
+          style: TextStyle(color: AppTheme.accentYellow),
+        ),
+        content: const Text(
+          'Are you sure you want to log out?',
+          style: TextStyle(color: AppTheme.primaryNavy),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppTheme.primaryNavy),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 163, 13, 2),
+            ),
+            child: const Text('Log Out'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      final authService = ref.read(authServiceProvider);
+      await authService.signOut();
+
+      if (context.mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error logging out: ${e.toString()}'),
+            backgroundColor: const Color.fromARGB(255, 174, 14, 3),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userProfileAsync = ref.watch(currentUserProfileProvider);
+    final currentUserAsync = ref.watch(currentUserProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
-      body: userProfileAsync.when(
-        data: (userProfile) {
-          if (userProfile == null) {
-            return const Center(child: Text('User not found'));
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        title: const Text('Settings', style: TextStyle(fontSize: 25)),
+        automaticallyImplyLeading: false,
+      ),
+      body: currentUserAsync.when(
+        data: (user) {
+          if (user == null) {
+            return const Center(
+              child: Text(
+                'Please log in',
+                style: TextStyle(color: AppTheme.primaryNavy),
+              ),
+            );
           }
 
-          return ListView(
-            children: [
-              // Profile Section
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 24),
+                // Profile section
+                CircleAvatar(
+                  radius: 50,
+                  backgroundColor: AppTheme.accentYellow,
+                  child: user.photoUrl != null && user.photoUrl!.isNotEmpty
+                      ? ClipOval(
+                          child: Image.network(
+                            user.photoUrl!,
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Text(
+                                user.name.isNotEmpty
+                                    ? user.name.substring(0, 1).toUpperCase()
+                                    : 'U',
+                                style: const TextStyle(
+                                  fontSize: 40,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primaryNavy,
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                      : Text(
+                          user.name.isNotEmpty
+                              ? user.name.substring(0, 1).toUpperCase()
+                              : 'U',
+                          style: const TextStyle(
+                            fontSize: 40,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryNavy,
+                          ),
+                        ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  user.name,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryNavy,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  user.email,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.accentYellow,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                // Settings sections
+                _SettingsSection(
+                  title: 'Account',
                   children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: AppColors.primary,
-                      backgroundImage: userProfile.photoUrl != null
-                          ? NetworkImage(userProfile.photoUrl!)
-                          : null,
-                      child: userProfile.photoUrl == null
-                          ? Text(
-                              userProfile.name.isNotEmpty
-                                  ? userProfile.name[0].toUpperCase()
-                                  : '?',
-                              style: const TextStyle(
-                                fontSize: 32,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            )
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      userProfile.name,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      userProfile.email,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                      ),
+                    _SettingsTile(
+                      icon: Icons.person_outline,
+                      title: 'Edit Profile',
+                      subtitle: 'Update your name and photo',
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Edit profile feature coming soon!'),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
-              ),
-              const Divider(),
-
-              // My Swaps
-              ListTile(
-                leading: const Icon(Icons.swap_horiz, color: AppColors.primary),
-                title: const Text('My Swaps'),
-                subtitle: const Text('View your swap history'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const MySwapsScreen()),
-                  );
-                },
-              ),
-              const Divider(),
-
-              // Notifications Section
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Text(
-                  'Notifications',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[600],
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-              SwitchListTile(
-                secondary: const Icon(Icons.notifications_outlined),
-                title: const Text('Notification reminders'),
-                subtitle: const Text(
-                  'Get notified about swap offers and messages',
-                ),
-                value: userProfile.notificationReminders,
-                onChanged: (value) async {
-                  // TODO: Update user preferences in Firestore
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Notification preferences updated'),
-                      duration: Duration(seconds: 1),
-                    ),
-                  );
-                },
-                activeColor: AppColors.secondary,
-              ),
-              SwitchListTile(
-                secondary: const Icon(Icons.email_outlined),
-                title: const Text('Email Updates'),
-                subtitle: const Text('Receive email notifications'),
-                value: userProfile.emailUpdates,
-                onChanged: (value) async {
-                  // TODO: Update user preferences in Firestore
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Email preferences updated'),
-                      duration: Duration(seconds: 1),
-                    ),
-                  );
-                },
-                activeColor: AppColors.secondary,
-              ),
-              const Divider(),
-
-              // App Section
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Text(
-                  'App',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[600],
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.info_outline),
-                title: const Text('About'),
-                subtitle: const Text('Learn more about BookSwap'),
-                onTap: () {
-                  showAboutDialog(
-                    context: context,
-                    applicationName: 'BookSwap',
-                    applicationVersion: '1.0.0',
-                    applicationIcon: Container(
-                      width: 64,
-                      height: 64,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
+                _SettingsSection(
+                  title: 'Notifications',
+                  children: [
+                    _SettingsTile(
+                      icon: Icons.notifications_outlined,
+                      title: 'Notification Reminders',
+                      subtitle: 'Get notified about new swaps',
+                      trailing: Switch(
+                        value: true,
+                        onChanged: (value) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Notification settings feature coming soon!',
+                              ),
+                            ),
+                          );
+                        },
+                        activeColor: AppTheme.accentYellow,
                       ),
-                      child: const Icon(
-                        Icons.menu_book_rounded,
-                        color: AppColors.secondary,
-                        size: 32,
-                      ),
+                      onTap: null,
                     ),
-                    children: [
-                      const SizedBox(height: 16),
-                      const Text(
-                        'BookSwap is a platform for students to exchange textbooks with each other.',
-                        style: TextStyle(fontSize: 14),
+                    _SettingsTile(
+                      icon: Icons.email_outlined,
+                      title: 'Email Updates',
+                      subtitle: 'Receive email notifications',
+                      trailing: Switch(
+                        value: true,
+                        onChanged: (value) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Email settings feature coming soon!',
+                              ),
+                            ),
+                          );
+                        },
+                        activeThumbColor: AppTheme.accentYellow,
                       ),
-                    ],
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.help_outline),
-                title: const Text('Help & Support'),
-                subtitle: const Text('Get help with the app'),
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Help & Support'),
-                      content: const Text(
-                        'For support, please contact:\nsupport@bookswap.app',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('Close'),
-                        ),
-                      ],
+                      onTap: null,
                     ),
-                  );
-                },
-              ),
-              const Divider(),
-
-              // Logout
-              ListTile(
-                leading: const Icon(Icons.logout, color: Colors.red),
-                title: const Text(
-                  'Log Out',
-                  style: TextStyle(color: Colors.red),
+                  ],
                 ),
-                onTap: () async {
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Log Out'),
-                      content: const Text('Are you sure you want to log out?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(true),
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.red,
+                _SettingsSection(
+                  title: 'About',
+                  children: [
+                    _SettingsTile(
+                      icon: Icons.info_outline,
+                      title: 'About BookSwap',
+                      subtitle: 'Version 1.0.0',
+                      onTap: () {
+                        showAboutDialog(
+                          context: context,
+                          applicationName: 'BookSwap',
+                          applicationVersion: '1.0.0',
+                          applicationIcon: Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: AppTheme.accentYellow,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.menu_book,
+                              size: 40,
+                              color: AppTheme.primaryNavy,
+                            ),
                           ),
-                          child: const Text('Log Out'),
-                        ),
-                      ],
+                          children: [
+                            const Text(
+                              'BookSwap is a platform for students to exchange textbooks with each other.',
+                              style: TextStyle(color: AppTheme.textWhite),
+                            ),
+                          ],
+                        );
+                      },
                     ),
-                  );
-
-                  if (confirmed == true && context.mounted) {
-                    await ref.read(authServiceProvider).signOut();
-                    if (context.mounted) {
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const SignInScreen()),
-                        (route) => false,
-                      );
-                    }
-                  }
-                },
-              ),
-              const SizedBox(height: 24),
-            ],
+                    _SettingsTile(
+                      icon: Icons.help_outline,
+                      title: 'Help & Support',
+                      subtitle: 'Get help using BookSwap',
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Help & support feature coming soon!',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                // Logout button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _handleLogout(context, ref),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red, width: 2),
+                      ),
+                      icon: const Icon(Icons.logout),
+                      label: const Text(
+                        'Log Out',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+              ],
+            ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
+        loading: () => const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation(AppTheme.accentYellow),
+          ),
+        ),
+        error: (error, stack) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                const Text(
+                  'Error loading profile',
+                  style: TextStyle(fontSize: 18, color: AppTheme.textWhite),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  error.toString(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.textGray,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
+    );
+  }
+}
+
+/// Settings section widget
+class _SettingsSection extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+
+  const _SettingsSection({required this.title, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.primaryNavy,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        ...children,
+      ],
+    );
+  }
+}
+
+/// Settings tile widget
+class _SettingsTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+
+  const _SettingsTile({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.trailing,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardTheme.color,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, color: AppTheme.accentYellow, size: 24),
+      ),
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: AppTheme.primaryNavy,
+        ),
+      ),
+      subtitle: subtitle != null
+          ? Text(
+              subtitle!,
+              style: const TextStyle(fontSize: 14, color: AppTheme.textGray),
+            )
+          : null,
+      trailing:
+          trailing ??
+          (onTap != null
+              ? const Icon(Icons.chevron_right, color: AppTheme.primaryNavy)
+              : null),
+      onTap: onTap,
     );
   }
 }
