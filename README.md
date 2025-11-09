@@ -86,8 +86,9 @@ BookSwap creates a trusted, user-friendly ecosystem where students can:
 <img width="1080" height="2400" alt="Screenshot_1762689651" src="https://github.com/user-attachments/assets/e188b072-0c26-4b65-a2da-44a8ce41bfa8" />
 <img width="1080" height="2400" alt="Screenshot_1762689646" src="https://github.com/user-attachments/assets/7d9863b1-58ca-4b40-b96e-53828f955619" />
 
+### 💡 Error Image
 
-
+<img width="1440" height="900" alt="Screenshot 2025-11-06 at 17 16 25" src="https://github.com/user-attachments/assets/4db57c0f-5ec2-486c-9e5b-9d305fd39e3a" />
 
 ### Authentication Flow
 ```
