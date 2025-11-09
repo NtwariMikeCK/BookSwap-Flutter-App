@@ -1,158 +1,235 @@
+// ignore_for_file: deprecated_member_use
+
+import 'package:bookswap/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../providers/chat_provider.dart';
-import '../../providers/auth_provider.dart';
-import '../../core/theme/app_theme.dart';
-import 'chat_conversation_screen.dart';
+import '../../providers/providers.dart';
+import 'chat_screen.dart';
 
+/// Chats list screen
+/// Shows all active chats for the current user
 class ChatsListScreen extends ConsumerWidget {
   const ChatsListScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final chatsAsync = ref.watch(myChatsProvider);
-    final currentUser = ref.watch(authStateProvider).value;
+    final currentUserAsync = ref.watch(currentUserProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Chats')),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        title: const Text('Chats'),
+        automaticallyImplyLeading: false,
+      ),
       body: chatsAsync.when(
         data: (chats) {
           if (chats.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    'No conversations yet',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  Icon(
+                    Icons.chat_bubble_outline,
+                    size: 80,
+                    color: AppTheme.textGray.withOpacity(0.5),
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Start a swap to begin chatting',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'No chats yet',
+                    style: TextStyle(fontSize: 18, color: AppTheme.textGray),
+                  ),
+                  const SizedBox(height: 8),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 48),
+                    child: Text(
+                      'Chats are created automatically when you start a swap with someone',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 14, color: AppTheme.textGray),
+                    ),
                   ),
                 ],
               ),
             );
           }
 
-          return ListView.separated(
-            itemCount: chats.length,
-            separatorBuilder: (context, index) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final chat = chats[index];
-              if (currentUser == null) return const SizedBox.shrink();
-
-              // ignore: unused_local_variable
-              final otherUserId = chat.getOtherParticipantId(currentUser.uid);
-              final otherUserName = chat.getOtherParticipantName(
-                currentUser.uid,
-              );
-              final unreadCount = chat.getUnreadCountForUser(currentUser.uid);
-
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: AppColors.primary,
+          return currentUserAsync.when(
+            data: (currentUser) {
+              if (currentUser == null) {
+                return const Center(
                   child: Text(
-                    otherUserName.isNotEmpty
-                        ? otherUserName[0].toUpperCase()
-                        : '?',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    'Please log in to view chats',
+                    style: TextStyle(color: AppTheme.textGray),
                   ),
-                ),
-                title: Text(
-                  otherUserName,
-                  style: TextStyle(
-                    fontWeight: unreadCount > 0
-                        ? FontWeight.w600
-                        : FontWeight.normal,
-                  ),
-                ),
-                subtitle: Text(
-                  chat.lastMessage ?? 'No messages yet',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: unreadCount > 0
-                        ? AppColors.textPrimary
-                        : AppColors.textSecondary,
-                    fontWeight: unreadCount > 0
-                        ? FontWeight.w500
-                        : FontWeight.normal,
-                  ),
-                ),
-                trailing: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    if (chat.lastMessageTime != null)
-                      Text(
-                        _formatTime(chat.lastMessageTime!),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: unreadCount > 0
-                              ? AppColors.secondary
-                              : AppColors.textSecondary,
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.all(8),
+                itemCount: chats.length,
+                itemBuilder: (context, index) {
+                  final chat = chats[index];
+
+                  // Get other user ID
+                  final otherUserId = chat.participants.firstWhere(
+                    (id) => id != currentUser.uid,
+                    orElse: () => '',
+                  );
+
+                  if (otherUserId.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+
+                  // Watch other user profile
+                  final otherUserAsync = ref.watch(
+                    userProfileProvider(otherUserId),
+                  );
+
+                  return otherUserAsync.when(
+                    data: (otherUser) {
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
                         ),
-                      ),
-                    if (unreadCount > 0) ...[
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: AppColors.secondary,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          unreadCount > 9 ? '9+' : '$unreadCount',
-                          style: const TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                        color: Theme.of(context).cardTheme.color,
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
                           ),
+                          leading: CircleAvatar(
+                            backgroundColor: AppTheme.accentYellow,
+                            child: Text(
+                              (otherUser?.name ?? 'U')
+                                  .substring(0, 1)
+                                  .toUpperCase(),
+                              style: const TextStyle(
+                                color: AppTheme.primaryNavy,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            otherUser?.name ?? 'Unknown User',
+                            style: const TextStyle(
+                              color: AppTheme.textWhite,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          subtitle: chat.lastMessage != null
+                              ? Text(
+                                  chat.lastMessage!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: AppTheme.textGray,
+                                  ),
+                                )
+                              : const Text(
+                                  'Start a conversation',
+                                  style: TextStyle(
+                                    color: AppTheme.textGray,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                          trailing: chat.lastUpdated != null
+                              ? Text(
+                                  _formatTimestamp(chat.lastUpdated!),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.textGray,
+                                  ),
+                                )
+                              : null,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => ChatScreen(
+                                  chatId: chat.id,
+                                  otherUserId: otherUserId,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                    loading: () => Card(
+                      margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      color: Theme.of(context).cardTheme.color,
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: AppTheme.textGray,
+                        ),
+                        title: Text(
+                          'Loading...',
+                          style: TextStyle(color: AppTheme.textGray),
                         ),
                       ),
-                    ],
-                  ],
-                ),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ChatConversationScreen(
-                        chatId: chat.id,
-                        otherUserName: otherUserName,
-                      ),
                     ),
+                    error: (_, __) => const SizedBox.shrink(),
                   );
                 },
               );
             },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (_, __) => const Center(
+              child: Text(
+                'Error loading user data',
+                style: TextStyle(color: AppTheme.textGray),
+              ),
+            ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
+        loading: () => const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation(AppTheme.accentYellow),
+          ),
+        ),
+        error: (error, stack) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                const Text(
+                  'Error loading chats',
+                  style: TextStyle(fontSize: 18, color: AppTheme.textWhite),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  error.toString(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.textGray,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
 
-  String _formatTime(DateTime dateTime) {
+  /// Format timestamp for display
+  String _formatTimestamp(DateTime timestamp) {
     final now = DateTime.now();
-    final difference = now.difference(dateTime);
+    final difference = now.difference(timestamp);
 
     if (difference.inDays == 0) {
-      return DateFormat('HH:mm').format(dateTime);
+      return DateFormat('HH:mm').format(timestamp);
     } else if (difference.inDays == 1) {
       return 'Yesterday';
     } else if (difference.inDays < 7) {
-      return DateFormat('EEEE').format(dateTime);
+      return DateFormat('EEE').format(timestamp);
     } else {
-      return DateFormat('MMM d').format(dateTime);
+      return DateFormat('MMM dd').format(timestamp);
     }
   }
 }
